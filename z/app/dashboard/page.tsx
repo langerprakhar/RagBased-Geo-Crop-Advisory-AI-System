@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/lib/supabase"
@@ -23,10 +23,33 @@ import { CloudSun, MessageSquare, BarChart3, Settings, LogOut } from "lucide-rea
 
 export default function Dashboard() {
   const router = useRouter()
+  const { user, loading } = useAuth()
   const [serviceActive, setServiceActive] = useState(true)
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/register')
+    }
+  }, [user, loading, router])
+  
   const handleLogout = () => {
     router.push("/")
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-800"></div>
+          <p className="text-green-800">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If not authenticated, don't render dashboard content
+  if (!user) {
+    return null
   }
 
   return (
