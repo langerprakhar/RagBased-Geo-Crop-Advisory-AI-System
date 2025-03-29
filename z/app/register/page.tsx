@@ -2,15 +2,19 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Loader2 } from "lucide-react"
 
 export default function Register() {
+  const { user } = useAuth()
+  const { signIn, verifyOTP } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(1)
@@ -21,6 +25,7 @@ export default function Register() {
     state: "",
     district: "",
     village: "",
+    otp: "",
   })
 
   const handleChange = (e) => {
@@ -32,21 +37,68 @@ export default function Register() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (step === 1) {
-      setStep(2)
-      return
-    }
-
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      if (step === 1) {
+        setStep(2)
+        setIsLoading(false)
+        return
+      }
+
+      if (step === 2) {
+        // Send OTP
+        await signIn(formData.phone)
+        setStep(3)
+        setIsLoading(false)
+        return
+      }
+
+      if (step === 3) {
+        // Verify OTP
+        await verifyOTP(formData.phone, formData.otp)
+
+        // After OTP verification, create user record
+        const { data: userData, error: userError } = await supabase.auth.getUser()
+        
+        if (userError || !userData.user) {
+          throw new Error("Failed to get user data")
+        }
+
+        // Insert into public.users table
+        const { error: dbError } = await supabase
+          .from('user')
+          .insert([
+            {
+            uid: userData.user.id,
+            full_name: formData.name,
+            phone_no: formData.phone,
+            language: formData.language,
+            country: "India",
+            Area: 1,
+            Pesticide_Usage: 2,
+            Crop: "a",
+            Nitrogen: 2,
+            P: 2,
+            pH: 3,
+          }
+        ])
+
+        if (dbError) {
+          console.error("DB Error:", dbError.message)
+          // Optionally, add error handling (e.g., show a toast)
+          return
+        }
+
       router.push("/dashboard")
-    }, 1500)
+    }} catch (error) {
+      console.error('Error:', JSON.stringify(error, null, 2))
+      // Handle error (show toast notification, etc.)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -54,17 +106,20 @@ export default function Register() {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl text-center text-green-800">
-            {step === 1 ? "Create Your Account" : "Your Location"}
+            {step === 3 ? "Verify Your Phone" : step === 2 ? "Your Location" : "Create Your Account"}
           </CardTitle>
           <CardDescription className="text-center">
-            {step === 1
-              ? "Enter your details to get started with AgriJyothi"
-              : "We need your location to provide accurate information"}
+            {step === 3 
+              ? "Enter the OTP sent to your phone" 
+              : step === 2 
+              ? "We need your location to provide accurate information"
+              : "Enter your details to get started with AgriJyothi"}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {step === 1 ? (
+              // Keep existing step 1 form exactly as is
               <>
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
@@ -114,7 +169,8 @@ export default function Register() {
                   </Select>
                 </div>
               </>
-            ) : (
+            ) : step === 2 ? (
+              // Keep existing step 2 form exactly as is
               <>
                 <div className="space-y-2">
                   <Label htmlFor="state">State</Label>
@@ -162,26 +218,53 @@ export default function Register() {
                   />
                 </div>
               </>
+            ) : (
+              // New simple OTP input form for step 3
+              <div className="space-y-2">
+                <Label htmlFor="otp">Enter OTP</Label>
+                <Input
+                  id="otp"
+                  name="otp"
+                  type="text"
+                  placeholder="Enter the 6-digit OTP"
+                  required
+                  maxLength={6}
+                  value={formData.otp}
+                  onChange={handleChange}
+                />
+              </div>
             )}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-green-600 hover:bg-green-700 text-white" 
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait
+                  Please wait...
                 </>
-              ) : step === 1 ? (
-                "Continue"
+              ) : step === 3 ? (
+                "Verify & Complete Registration"
+              ) : step === 2 ? (
+                "Send OTP"
               ) : (
-                "Complete Registration"
+                "Continue"
               )}
             </Button>
 
-            {step === 2 && (
-              <Button type="button" variant="ghost" className="w-full" onClick={() => setStep(1)}>
+            {step > 1 && (
+              <Button 
+                type="button" 
+                variant="ghost" 
+                className="w-full" 
+                onClick={() => setStep(step - 1)}
+                disabled={isLoading}
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to previous step
+                Back
               </Button>
             )}
 
@@ -197,4 +280,3 @@ export default function Register() {
     </div>
   )
 }
-

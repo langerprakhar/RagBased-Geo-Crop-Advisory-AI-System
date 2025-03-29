@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/contexts/AuthContext"
 import { Loader2 } from "lucide-react"
 
 export default function Login() {
   const router = useRouter()
+  const { signIn, verifyOTP } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     phone: "",
@@ -18,30 +20,29 @@ export default function Login() {
   })
   const [step, setStep] = useState(1)
 
+  // Added handleChange function to update form data
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-
-    if (step === 1) {
-      setIsLoading(true)
-      // Simulate OTP sending
-      setTimeout(() => {
-        setIsLoading(false)
-        setStep(2)
-      }, 1500)
-      return
-    }
-
     setIsLoading(true)
-    // Simulate verification
-    setTimeout(() => {
+
+    try {
+      if (step === 1) {
+        await signIn(formData.phone)
+        setStep(2)
+      } else {
+        await verifyOTP(formData.phone, formData.otp)
+        router.push("/dashboard")
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      // Handle error (show toast notification, etc.)
+    } finally {
       setIsLoading(false)
-      router.push("/dashboard")
-    }, 1500)
+    }
   }
 
   return (
@@ -52,7 +53,9 @@ export default function Login() {
             {step === 1 ? "Login to Your Account" : "Enter OTP"}
           </CardTitle>
           <CardDescription className="text-center">
-            {step === 1 ? "Enter your phone number to receive an OTP" : "We've sent a one-time password to your phone"}
+            {step === 1
+              ? "Enter your phone number to receive an OTP"
+              : "We've sent a one-time password to your phone"}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -118,4 +121,3 @@ export default function Login() {
     </div>
   )
 }
-
