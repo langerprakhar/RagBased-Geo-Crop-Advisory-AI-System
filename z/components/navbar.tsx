@@ -62,9 +62,9 @@ export function Navbar() {
 
   // Navigation Items
   const navigationItems = [
-    { name: 'Home', href: '/' },
+    { name: 'Dashboard', href: '/dashboard' },
     { name: 'About', href: '/about' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'Contact', href: '/' },
   ]
 
   return (

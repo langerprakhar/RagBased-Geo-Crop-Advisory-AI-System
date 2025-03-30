@@ -104,6 +104,27 @@ export default function Dashboard() {
     setIsModalOpen(false)
   }
 
+  const handleToggle = (checked) => {
+    setServiceActive(checked);
+
+    console.log(`Service is now ${checked ? "Active" : "Paused"}`);
+    // Add any additional logic here (e.g., API call, state update, etc.)
+
+    supabase
+      .from("user")
+      .update({
+        Subscribed: checked
+      })
+      .eq("uid", user?.id)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error updating:", error.message)
+        } else {
+          console.log("Update successful:", data)
+        }
+      })
+  };
+
   useEffect(() => {
     if (!loading && !user) {
       router.push("/register")
@@ -142,7 +163,7 @@ export default function Dashboard() {
                 <p className="text-green-700">Your daily farming assistant is active</p>
               </div>
               <div className="flex items-center space-x-2">
-                <Switch id="service-status" checked={serviceActive} onCheckedChange={setServiceActive} />
+                <Switch id="service-status" checked={serviceActive} onCheckedChange={handleToggle} />
                 <Label htmlFor="service-status" className="font-medium text-green-800">
                   {serviceActive ? "Service Active" : "Service Paused"}
                 </Label>
