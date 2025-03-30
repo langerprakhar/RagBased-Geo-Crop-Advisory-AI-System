@@ -4,8 +4,16 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/lib/supabase"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import {
@@ -19,19 +27,89 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { CloudSun, MessageSquare, BarChart3, Settings, LogOut } from "lucide-react"
+import { CloudSun, LogOut } from "lucide-react"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
+
+// Define the form values interface.
+interface FormValues {
+  Country: string
+  Pesticide_Usage: number
+  Crop: string
+  Area: number
+  Nitrogen: number
+  K: number
+  P: number
+  pH: number
+}
 
 export default function Dashboard() {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [serviceActive, setServiceActive] = useState(true)
+  const [formValues, setFormValues] = useState<FormValues>({
+    Country: "",
+    Pesticide_Usage: 0,
+    Crop: "",
+    Area: 0,
+    Nitrogen: 0,
+    K: 0,
+    P: 0,
+    pH: 0,
+  })
+
+  // Handle input changes for both string and numeric fields.
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target
+    setFormValues((prev) => ({
+      ...prev,
+      [name]: type === "number" ? parseFloat(value) || 0 : value,
+    }))
+  }
+
+  // Sample Supabase update function. Adjust the table name and fields as needed.
+  const handleUpdate = (values: FormValues) => {
+    if (!user) return
+
+    supabase
+      .from("user")
+      .update({
+        country: values.Country,
+        Pesticide_Usage: values.Pesticide_Usage,
+        Crop: values.Crop,
+        Area: values.Area,
+        Nitrogen: values.Nitrogen,
+        K: values.K,
+        P: values.P,
+        pH: values.pH,
+      })
+      .eq("uid", user.id)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error updating:", error.message)
+        } else {
+          console.log("Update successful:", data)
+        }
+      })
+  }
+
+  const handleModalUpdate = () => {
+    handleUpdate(formValues)
+    setIsModalOpen(false)
+  }
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/register')
+      router.push("/register")
     }
   }, [user, loading, router])
-  
+
   const handleLogout = () => {
     router.push("/")
   }
@@ -47,7 +125,7 @@ export default function Dashboard() {
     )
   }
 
-  // If not authenticated, don't render dashboard content
+  // If not authenticated, don't render dashboard content.
   if (!user) {
     return null
   }
@@ -60,7 +138,7 @@ export default function Dashboard() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-green-800">Welcome, Farmer</h1>
+                <h1 className="text-2xl font-bold text-green-800">Welcome</h1>
                 <p className="text-green-700">Your daily farming assistant is active</p>
               </div>
               <div className="flex items-center space-x-2">
@@ -78,89 +156,162 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center text-green-800">
               <CloudSun className="mr-2 h-5 w-5" />
-              Today's Updates
+              Update Information
             </CardTitle>
-            <CardDescription>Information for your farm in Village Name, District</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h3 className="font-medium text-blue-800 mb-1">Weather Forecast</h3>
-              <p className="text-blue-700">Sunny with occasional clouds. Temperature: 28°C - 32°C</p>
-            </div>
+            <Button
+              variant="default"
+              className="w-full md:w-auto"
+              onClick={() => setIsModalOpen(true)}
+            >
+              Update
+            </Button>
 
-            <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
-              <h3 className="font-medium text-amber-800 mb-1">Crop Advisory</h3>
-              <p className="text-amber-700">
-                Good time to apply fertilizer to your rice crop. Ensure proper irrigation.
-              </p>
-            </div>
+            {isModalOpen && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="bg-white p-6 rounded shadow-lg w-11/12 max-w-lg">
+                  <h2 className="text-xl font-bold mb-1">Update Form</h2>
+                  <form>
+                    {/* Country Input */}
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium mb-1" htmlFor="Country">
+                        Country
+                      </label>
+                      <Input
+                        id="Country"
+                        name="Country"
+                        value={formValues.Country}
+                        onChange={handleChange}
+                        placeholder="Enter country"
+                      />
+                    </div>
+                    {/* Area Input */}
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium mb-1" htmlFor="Area">
+                        Area
+                      </label>
+                      <Input
+                        type="number"
+                        id="Area"
+                        name="Area"
+                        value={formValues.Area}
+                        onChange={handleChange}
+                        placeholder="Enter area (in hectares)"
+                      />
+                    </div>
+                    {/* Crop Input */}
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium mb-1" htmlFor="Crop">
+                        Crop
+                      </label>
+                      <Input
+                        id="Crop"
+                        name="Crop"
+                        value={formValues.Crop}
+                        onChange={handleChange}
+                        placeholder="Enter crop name"
+                      />
+                    </div>
+                    {/* Pesticide Usage Input */}
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium mb-1" htmlFor="Pesticide_Usage">
+                        Pesticide Usage (tonnes per hectare)
+                      </label>
+                      <Input
+                        type="number"
+                        id="Pesticide_Usage"
+                        name="Pesticide_Usage"
+                        value={formValues.Pesticide_Usage}
+                        onChange={handleChange}
+                        placeholder="Enter pesticide usage"
+                      />
+                    </div>
+                    {/* Nitrogen Input */}
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium mb-1" htmlFor="Nitrogen">
+                        Nitrogen
+                      </label>
+                      <Input
+                        type="number"
+                        id="Nitrogen"
+                        name="Nitrogen"
+                        value={formValues.Nitrogen}
+                        onChange={handleChange}
+                        placeholder="Enter nitrogen value"
+                      />
+                    </div>
+                    {/* Potassium Input */}
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium mb-1" htmlFor="K">
+                        Potassium
+                      </label>
+                      <Input
+                        type="number"
+                        id="K"
+                        name="K"
+                        value={formValues.K}
+                        onChange={handleChange}
+                        placeholder="Enter potassium value"
+                      />
+                    </div>
+                    {/* Phosphorus Input */}
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium mb-1" htmlFor="P">
+                        Phosphorus
+                      </label>
+                      <Input
+                        type="number"
+                        id="P"
+                        name="P"
+                        value={formValues.P}
+                        onChange={handleChange}
+                        placeholder="Enter phosphorus value"
+                      />
+                    </div>
+                    {/* pH Input */}
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium mb-1" htmlFor="pH">
+                        pH
+                      </label>
+                      <Input
+                        type="number"
+                        id="pH"
+                        name="pH"
+                        value={formValues.pH}
+                        onChange={handleChange}
+                        placeholder="Enter pH value"
+                      />
+                    </div>
 
-            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
-              <h3 className="font-medium text-emerald-800 mb-1">Market Prices</h3>
-              <p className="text-emerald-700">Rice: ₹2,100/quintal (↑5%), Wheat: ₹2,400/quintal (↑2%)</p>
-            </div>
+                  
+
+                    <div className="flex justify-end space-x-2 mt-4">
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => setIsModalOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button variant="default" type="button" onClick={handleModalUpdate}>
+                        Update
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Service Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <MessageSquare className="mr-2 h-5 w-5 text-green-600" />
-                Language
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500">Current: Hindi</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" size="sm" className="w-full">
-                Change Language
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <BarChart3 className="mr-2 h-5 w-5 text-green-600" />
-                Reports
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500">View your past updates</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" size="sm" className="w-full">
-                View History
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <Settings className="mr-2 h-5 w-5 text-green-600" />
-                Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500">Manage your preferences</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" size="sm" className="w-full">
-                Open Settings
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-
-        {/* Stop Service */}
+        {/* Stop Service Card */}
         <Card className="border-red-200">
           <CardHeader>
             <CardTitle className="text-red-700">Stop Service</CardTitle>
-            <CardDescription>If you want to completely stop receiving updates from AgriJyothi</CardDescription>
+            <CardDescription>
+              If you want to completely stop receiving updates from AgriJyothi
+            </CardDescription>
           </CardHeader>
           <CardFooter>
             <AlertDialog>
@@ -179,7 +330,9 @@ export default function Dashboard() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction className="bg-red-600 hover:bg-red-700">Yes, Stop Service</AlertDialogAction>
+                  <AlertDialogAction className="bg-red-600 hover:bg-red-700">
+                    Yes, Stop Service
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -201,4 +354,3 @@ export default function Dashboard() {
     </div>
   )
 }
-
