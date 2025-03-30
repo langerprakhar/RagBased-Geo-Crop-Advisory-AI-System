@@ -20,7 +20,7 @@ export default function Login() {
   })
   const [step, setStep] = useState(1)
 
-  // Added handleChange function to update form data
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
@@ -39,7 +39,7 @@ export default function Login() {
       }
     } catch (error) {
       console.error("Error:", error)
-      // Handle error (show toast notification, etc.)
+
     } finally {
       setIsLoading(false)
     }

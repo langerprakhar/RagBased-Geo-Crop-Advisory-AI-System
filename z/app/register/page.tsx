@@ -49,7 +49,6 @@ export default function Register() {
       }
 
       if (step === 2) {
-        // Send OTP
         await signIn(formData.phone)
         setStep(3)
         setIsLoading(false)
@@ -57,17 +56,14 @@ export default function Register() {
       }
 
       if (step === 3) {
-        // Verify OTP
         await verifyOTP(formData.phone, formData.otp)
 
-        // After OTP verification, create user record
         const { data: userData, error: userError } = await supabase.auth.getUser()
         
         if (userError || !userData.user) {
           throw new Error("Failed to get user data")
         }
 
-        // Insert into public.users table
         const { error: dbError } = await supabase
           .from('user')
           .insert([
@@ -88,14 +84,12 @@ export default function Register() {
 
         if (dbError) {
           console.error("DB Error:", dbError.message)
-          // Optionally, add error handling (e.g., show a toast)
           return
         }
 
       router.push("/dashboard")
     }} catch (error) {
       console.error('Error:', JSON.stringify(error, null, 2))
-      // Handle error (show toast notification, etc.)
     } finally {
       setIsLoading(false)
     }
@@ -119,7 +113,6 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {step === 1 ? (
-              // Keep existing step 1 form exactly as is
               <>
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
@@ -196,22 +189,22 @@ export default function Register() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="district">District</Label>
+                  <Label htmlFor="district">Crop</Label>
                   <Input
                     id="district"
                     name="district"
-                    placeholder="Enter your district"
+                    placeholder="Enter your Crop"
                     required
                     value={formData.district}
                     onChange={handleChange}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="village">Village/Town</Label>
+                  <Label htmlFor="village">Area</Label>
                   <Input
                     id="village"
                     name="village"
-                    placeholder="Enter your village or town"
+                    placeholder="0"
                     required
                     value={formData.village}
                     onChange={handleChange}
