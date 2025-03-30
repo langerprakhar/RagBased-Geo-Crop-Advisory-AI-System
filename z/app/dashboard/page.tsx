@@ -53,6 +53,8 @@ export default function Dashboard() {
   const { user, loading } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [serviceActive, setServiceActive] = useState(true)
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false)
+  const [cropInfo, setCropInfo] = useState<string | null>(null)
   const [formValues, setFormValues] = useState<FormValues>({
     Country: "",
     Pesticide_Usage: 0,
@@ -126,6 +128,20 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (isCropModalOpen) {
+      fetch("http://localhost:5000/crop_recommendation")
+        .then((res) => res.json())
+        .then((data) => {
+          setCropInfo(data.info) // Adjust according to your API response structure.
+        })
+        .catch((error) => {
+          console.error("Error fetching crop recommendation:", error)
+          setCropInfo("Error loading recommendation.")
+        })
+    }
+  }, [isCropModalOpen])
+
+  useEffect(() => {
     if (!loading && !user) {
       router.push("/register")
     }
@@ -177,16 +193,24 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center text-green-800">
               <CloudSun className="mr-2 h-5 w-5" />
-              Update Information
+              Functions
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button
               variant="default"
-              className="w-full md:w-auto"
+              className="w-full md:w-auto bg-green-500 hover:bg-green-600"
               onClick={() => setIsModalOpen(true)}
             >
-              Update
+              Update Information
+            </Button>
+
+            <Button
+              variant="default"
+              className="w-full md:w-auto ml-4 bg-green-500 hover:bg-green-600"
+              onClick={() => setIsCropModalOpen(true)}
+            >
+              Crop Recommendation
             </Button>
 
             {isModalOpen && (
@@ -325,6 +349,25 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Crop Recommendation Modal */}
+        {isCropModalOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded shadow-lg w-11/12 max-w-lg">
+              <h2 className="text-xl font-bold mb-4">Crop Recommendation</h2>
+              {cropInfo ? (
+                <p>{cropInfo}</p>
+              ) : (
+                <p>Loading recommendation...</p>
+              )}
+              <div className="flex justify-end mt-4">
+                <Button variant="outline" onClick={() => setIsCropModalOpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stop Service Card */}
         <Card className="border-red-200">
