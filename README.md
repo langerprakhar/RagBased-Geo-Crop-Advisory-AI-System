@@ -15,6 +15,11 @@ Multiple models for Crop Recommendation and Crop Yield Prediction
 Easy to use and accessible solution for making better decisions
 Daily SMS insights and auxiliary features available on website
 
+# System Architecture
+
+![arch](https://github.com/user-attachments/assets/adeecd9e-e846-4f31-9efc-f3126c93b392)
+
+
 # Project Setup and Running Instructions
 
 ## Introduction
