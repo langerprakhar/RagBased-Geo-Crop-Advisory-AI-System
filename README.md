@@ -1,4 +1,4 @@
-# HackNite
+# Geo Crop Advisory AI System Based on RAG
 
 The one AI Solution for all farmers.
 Data driven insights with real time data (Satellite data -> NDVI and Weather)
