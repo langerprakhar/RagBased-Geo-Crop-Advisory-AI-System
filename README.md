@@ -28,7 +28,7 @@ This project provides a simple guide on how to set up and run the application.
 ## Steps to Run the Project
 
 1. **Clone the Repository**: Clone the project using Git.
-git clone https://github.com/fridge32/HackNite.git
+git clone https://github.com/langerprakhar/RagBased-Geo-Crop-Advisory-AI-System
 2. **Navigate to Project Directory**: Move into the project directory.
 cd [z]
 3. **Install Dependencies**: Install all required dependencies using npm.
